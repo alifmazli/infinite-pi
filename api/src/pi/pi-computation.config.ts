@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { getEnvBoolean, getEnvNumber } from '../utils/env.util';
 
 export interface PiComputationConfig {
   // Increment strategy
@@ -28,27 +29,21 @@ export class PiComputationConfigService {
   private loadConfig(): PiComputationConfig {
     return {
       // Increment strategy - adaptive based on precision
-      incrementLow: this.getEnvNumber('PI_INCREMENT_LOW', 10),
-      incrementMedium: this.getEnvNumber('PI_INCREMENT_MEDIUM', 1000),
-      incrementHighPercent: this.getEnvNumber('PI_INCREMENT_HIGH_PERCENT', 5),
+      incrementLow: getEnvNumber('PI_INCREMENT_LOW', 10),
+      incrementMedium: getEnvNumber('PI_INCREMENT_MEDIUM', 1000),
+      incrementHighPercent: getEnvNumber('PI_INCREMENT_HIGH_PERCENT', 5),
 
       // Write batching - reduce DB overhead
-      writeBatchSize: this.getEnvNumber('PI_WRITE_BATCH_SIZE', 10),
-      writeBatchIntervalMs: this.getEnvNumber(
-        'PI_WRITE_BATCH_INTERVAL_MS',
-        5000,
-      ),
+      writeBatchSize: getEnvNumber('PI_WRITE_BATCH_SIZE', 10),
+      writeBatchIntervalMs: getEnvNumber('PI_WRITE_BATCH_INTERVAL_MS', 5000),
 
       // Cleanup strategy - manage DB growth
-      cleanupEnabled: this.getEnvBoolean('PI_DB_CLEANUP_ENABLED', false),
-      cleanupKeepMilestones: this.getEnvBoolean(
+      cleanupEnabled: getEnvBoolean('PI_DB_CLEANUP_ENABLED', false),
+      cleanupKeepMilestones: getEnvBoolean(
         'PI_DB_CLEANUP_KEEP_MILESTONES',
         true,
       ),
-      cleanupMinPrecision: this.getEnvNumber(
-        'PI_DB_CLEANUP_MIN_PRECISION',
-        1000,
-      ),
+      cleanupMinPrecision: getEnvNumber('PI_DB_CLEANUP_MIN_PRECISION', 1000),
     };
   }
 
@@ -74,26 +69,6 @@ export class PiComputationConfigService {
     if (this.config.cleanupMinPrecision < 0) {
       throw new Error('PI_DB_CLEANUP_MIN_PRECISION must be >= 0');
     }
-  }
-
-  private getEnvNumber(key: string, defaultValue: number): number {
-    const value = process.env[key];
-    if (value === undefined) {
-      return defaultValue;
-    }
-    const parsed = parseInt(value, 10);
-    if (isNaN(parsed)) {
-      throw new Error(`Invalid number for ${key}: ${value}`);
-    }
-    return parsed;
-  }
-
-  private getEnvBoolean(key: string, defaultValue: boolean): boolean {
-    const value = process.env[key];
-    if (value === undefined) {
-      return defaultValue;
-    }
-    return value.toLowerCase() === 'true' || value === '1';
   }
 
   getConfig(): PiComputationConfig {
