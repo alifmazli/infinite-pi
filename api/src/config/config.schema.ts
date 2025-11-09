@@ -3,7 +3,7 @@ import * as Joi from 'joi';
 export const defaultConfig = {
   NODE_ENV: 'development',
   PORT: 3001,
-  ALLOWED_ORIGINS: 'http://localhost:3002',
+  ALLOWED_ORIGINS: 'http://localhost:3000,http://localhost:3002',
   DATABASE_URL: 'file:./prisma/dev.db',
   PI_INCREMENT_LOW: 10,
   PI_INCREMENT_MEDIUM: 1000,
