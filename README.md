@@ -9,7 +9,7 @@ App for calculating Pi to arbitrary precision using the Chudnovsky algorithm, im
 - Node.js 18+
 - npm
 
-### Environment Variables
+<!-- ### Environment Variables
 
 Create a `.env` file in the `api` directory (or copy from `.env.example`):
 
@@ -37,7 +37,7 @@ THROTTLE_TTL=60
 THROTTLE_LIMIT=100
 ```
 
-See `api/.env.example` for a complete template with all available options.
+See `api/.env.example` for a complete template with all available options. -->
 
 ### Installation
 
