@@ -1,6 +1,8 @@
-import { Logger } from '@nestjs/common';
+import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { ConfigService } from './config/config.service';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -17,21 +19,51 @@ async function bootstrap() {
       ),
     ]);
 
-    // Enable CORS
+    const configService = app.get(ConfigService);
+    const appConfig = configService.app;
+
+    // Enable CORS from config
     app.enableCors({
-      origin: [
-        'http://localhost:3000',
-        'http://localhost:3002',
-        'http://127.0.0.1:3000',
-        'http://127.0.0.1:3002',
-        ...(process.env.ALLOWED_ORIGINS?.split(',') || []),
-      ],
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
-      credentials: true,
+      origin: appConfig.cors.origins,
+      methods: appConfig.cors.methods,
+      allowedHeaders: appConfig.cors.allowedHeaders,
+      credentials: appConfig.cors.credentials,
     });
 
-    const port = process.env.PORT ?? 3001;
+    // Enable API versioning
+    app.setGlobalPrefix('api');
+    app.enableVersioning({
+      type: VersioningType.URI,
+      defaultVersion: '1',
+    });
+
+    // Global validation pipe
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+        transformOptions: {
+          enableImplicitConversion: true,
+        },
+      }),
+    );
+
+    // Swagger/OpenAPI documentation
+    if (appConfig.nodeEnv !== 'production') {
+      const config = new DocumentBuilder()
+        .setTitle('Infinite Pi API')
+        .setDescription('API for calculating Pi to arbitrary precision')
+        .setVersion('1.0')
+        .addTag('Pi', 'Pi computation endpoints')
+        .addTag('Health', 'Health check endpoints')
+        .build();
+      const document = SwaggerModule.createDocument(app, config);
+      SwaggerModule.setup('api/docs', app, document);
+      logger.log('📚 Swagger documentation available at /api/docs');
+    }
+
+    const port = appConfig.port;
 
     // Add timeout to listen
     await Promise.race([
@@ -46,11 +78,12 @@ async function bootstrap() {
 
     logger.log(`🚀 Application is running on: http://localhost:${port}`);
     logger.log(`📦 Runtime: Node.js ${process.version}`);
+    logger.log(`🌍 Environment: ${appConfig.nodeEnv}`);
   } catch (error) {
-    logger.error(
-      `Failed to bootstrap application: ${error.message}`,
-      error.stack,
-    );
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    logger.error(`Failed to bootstrap application: ${errorMessage}`, errorStack);
     process.exit(1);
   }
 }
