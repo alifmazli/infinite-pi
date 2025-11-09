@@ -1,4 +1,5 @@
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
+import { getPrismaErrorInfo } from '../common/utils/prisma-error.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { PiCalculatorService } from './pi-calculator.service';
 import { PiComputationConfigService } from './pi-computation.config';
@@ -306,15 +307,20 @@ export class PiComputationService implements OnModuleDestroy {
         await this.runCleanup();
       }
     } catch (error) {
-      // Re-add to buffer on error (except for duplicates which are expected)
-      if (error.message?.includes('Unique constraint')) {
+      // Handle Prisma errors properly
+      const errorInfo = getPrismaErrorInfo(error);
+
+      if (errorInfo?.isUniqueConstraint) {
         this.logger.debug(
           `Some values already exist in database (expected), continuing...`,
         );
       } else {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+        const errorStack = error instanceof Error ? error.stack : undefined;
         this.logger.error(
-          `Error flushing write buffer: ${error.message}`,
-          error.stack,
+          `Error flushing write buffer: ${errorMessage}`,
+          errorStack,
         );
         // Re-add failed items to buffer
         this.writeBuffer.unshift(...buffer);
