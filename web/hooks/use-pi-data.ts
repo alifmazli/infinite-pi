@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
 import type { PiResponse } from "@/lib/types";
+import { useEffect, useState } from "react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -10,12 +10,12 @@ export const usePiData = () => {
 
   const fetchPi = async () => {
     try {
-      const response = await fetch(`${API_URL}/pi`);
+      const response = await fetch(`${API_URL}/api/v1/pi`);
       if (!response.ok) {
         throw new Error("Failed to fetch Pi value");
       }
-      const data: PiResponse = await response.json();
-      setPiData(data);
+      const { data } = await response.json();
+      setPiData(data as PiResponse);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
@@ -36,4 +36,3 @@ export const usePiData = () => {
 
   return { piData, loading, error };
 };
-
