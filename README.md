@@ -45,13 +45,14 @@ See `api/.env.example` for a complete template with all available options. -->
 
 ```bash
 cd api
+# Copy environment variables template
+# Edit .env with your configuration
+cp .env.example .env
+
 npm install
 npm run db:generate
 npm run db:push
 
-# Copy environment variables template
-cp .env.example .env
-# Edit .env with your configuration
 ```
 
 **Frontend (Web):**
